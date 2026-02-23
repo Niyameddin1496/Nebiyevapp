@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin Panel — NebiyevApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#06080f;--surface:#0d1117;--card:#161b22;--border:#21262d;--accent:#3fb950;--accent2:#58a6ff;--red:#f85149;--yellow:#d29922;--purple:#a371f7;--text:#e6edf3;--muted:#7d8590;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:380px;text-align:center;animation:pop .4s ease;}
+.login-logo{font-size:2.5rem;margin-bottom:1rem;}
+.login-title{font-size:1.4rem;font-weight:800;margin-bottom:.35rem;}
+.login-sub{color:var(--muted);font-size:.85rem;margin-bottom:2rem;}
+.login-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:1rem;outline:none;text-align:center;letter-spacing:4px;transition:border-color .2s;margin-bottom:1rem;}
+.login-input:focus{border-color:var(--accent2);}
+.login-btn{width:100%;background:var(--accent);color:#000;border:none;padding:.75rem;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .2s;}
+.login-btn:hover{background:#3dba4d;}
+.login-err{color:var(--red);font-size:.8rem;margin-top:.75rem;min-height:1.2rem;}
+
+/* LAYOUT */
+#adminApp{display:none;}
+.admin-nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;position:sticky;top:0;z-index:100;}
+.admin-logo{font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:.5rem;}
+.admin-logo span{color:var(--accent);}
+.admin-logo sub{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--red);margin-left:2px;}
+.nav-r{display:flex;align-items:center;gap:.75rem;}
+.site-link{display:flex;align-items:center;gap:.35rem;color:var(--accent2);text-decoration:none;font-size:.8rem;border:1px solid var(--border);padding:.3rem .7rem;border-radius:6px;transition:border-color .2s;}
+.site-link:hover{border-color:var(--accent2);}
+.logout-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.3rem .7rem;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:'Space Grotesk',sans-serif;transition:all .2s;}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* TABS NAV */
+.tab-nav{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 1.5rem;overflow-x:auto;}
+.tab-nav-item{display:flex;align-items:center;gap:.4rem;padding:.75rem 1.1rem;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
+.tab-nav-item:hover{color:var(--text);}
+.tab-nav-item.active{color:var(--accent2);border-bottom-color:var(--accent2);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* STATS BAR */
+.stats-bar{display:flex;gap:1rem;padding:1.25rem 1.5rem;flex-wrap:wrap;max-width:1300px;margin:0 auto;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.25rem;flex:1;min-width:140px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(255,255,255,.02));pointer-events:none;}
+.stat-label{font-size:.72rem;color:var(--muted);margin-bottom:.3rem;}
+.stat-val{font-size:1.55rem;font-weight:800;font-family:'JetBrains Mono',monospace;}
+.stat-trend{font-size:.7rem;color:var(--accent);margin-top:.2rem;}
+
+/* SECTION WRAP */
+.sec-wrap{max-width:1300px;margin:0 auto;padding:1.25rem 1.5rem 3rem;}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;}
+.toolbar-l{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;}
+.search-inp{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:.5rem .9rem;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.85rem;outline:none;width:240px;transition:border-color .2s;}
+.search-inp:focus{border-color:var(--accent2);}
+.filter-sel{background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--muted);padding:.5rem .8rem;font-family:'Space Grotesk',sans-serif;font-size:.85rem;cursor:pointer;outline:none;}
+.add-btn{background:var(--accent);color:#000;border:none;padding:.5rem 1.1rem;border-radius:7px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;gap:.35rem;transition:all .2s;}
+.add-btn:hover{background:#3dba4d;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--surface);padding:.7rem 1rem;text-align:left;font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:rgba(255,255,255,.02);}
+td{padding:.8rem 1rem;font-size:.85rem;vertical-align:middle;}
+.td-icon{font-size:1.4rem;}
+.td-name{font-weight:600;}
+.td-ver{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);}
+.td-cat{display:inline-flex;align-items:center;gap:.3rem;font-size:.7rem;font-weight:600;padding:.2rem .5rem;border-radius:4px;}
+.td-size{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--muted);}
+.stars{color:var(--yellow);font-size:.72rem;}
+.feat-badge{font-size:.63rem;font-weight:700;padding:.15rem .42rem;border-radius:4px;background:rgba(210,153,34,.15);color:var(--yellow);border:1px solid rgba(210,153,34,.3);}
+.badge-pill{font-size:.63rem;font-weight:700;padding:.15rem .42rem;border-radius:4px;text-transform:uppercase;}
+.act-btns{display:flex;gap:.4rem;}
+.act-btn{background:none;border:1px solid var(--border);border-radius:5px;padding:.3rem .55rem;cursor:pointer;font-size:.76rem;font-family:'Space Grotesk',sans-serif;transition:all .2s;display:flex;align-items:center;gap:.25rem;}
+.act-btn.edit{color:var(--accent2);}
+.act-btn.edit:hover{border-color:var(--accent2);background:rgba(88,166,255,.08);}
+.act-btn.del{color:var(--red);}
+.act-btn.del:hover{border-color:var(--red);background:rgba(248,81,73,.08);}
+.act-btn.feat{color:var(--yellow);}
+.act-btn.feat:hover{border-color:var(--yellow);background:rgba(210,153,34,.08);}
+
+.empty{text-align:center;padding:3rem;color:var(--muted);}
+.empty-icon{font-size:2.5rem;margin-bottom:.75rem;}
+
+/* CATEGORIES */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;}
+.cat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;transition:border-color .2s;}
+.cat-card:hover{border-color:var(--accent2);}
+.cat-left{display:flex;align-items:center;gap:.75rem;}
+.cat-icon-box{width:42px;height:42px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;}
+.cat-name{font-weight:700;font-size:.95rem;}
+.cat-count{font-size:.75rem;color:var(--muted);margin-top:.1rem;}
+.cat-actions{display:flex;gap:.4rem;}
+
+.add-cat-form{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-top:1.25rem;display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end;}
+.add-cat-form .fg{flex:1;min-width:150px;}
+
+/* BANNERS */
+.banner-grid{display:grid;gap:1rem;}
+.banner-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.banner-left{flex:1;}
+.banner-title-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem;}
+.banner-title{font-weight:700;}
+.banner-sub{color:var(--muted);font-size:.82rem;}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;}
+.status-dot.off{background:var(--muted);}
+.toggle-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:.35rem .8rem;cursor:pointer;font-size:.8rem;font-family:'Space Grotesk',sans-serif;transition:all .2s;color:var(--muted);}
+.toggle-btn.on{color:var(--accent);border-color:var(--accent);}
+.toggle-btn:hover{color:var(--text);border-color:var(--muted);}
+
+/* STATS DETAIL */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem;}
+.chart-title{font-size:.85rem;font-weight:700;margin-bottom:1rem;color:var(--muted);}
+.bar-chart{display:flex;flex-direction:column;gap:.5rem;}
+.bar-row{display:flex;align-items:center;gap:.75rem;}
+.bar-label{font-size:.75rem;width:80px;flex-shrink:0;color:var(--muted);}
+.bar-track{flex:1;background:var(--surface);border-radius:4px;height:8px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+.bar-val{font-size:.72rem;font-family:'JetBrains Mono',monospace;color:var(--muted);width:45px;text-align:right;}
+.visits-table{width:100%;}
+.visits-table td{padding:.45rem .6rem;font-size:.8rem;border-bottom:1px solid var(--border);}
+.visits-table tr:last-child td{border:none;}
+.vt-time{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.72rem;}
+
+/* PASSWORD */
+.pwd-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2rem;max-width:460px;}
+.pwd-box h3{font-size:1.1rem;font-weight:700;margin-bottom:.5rem;}
+.pwd-box p{color:var(--muted);font-size:.85rem;margin-bottom:1.5rem;}
+.pwd-strength{height:4px;border-radius:2px;margin-top:.5rem;transition:all .3s;}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:999;display:none;align-items:center;justify-content:center;padding:1rem;}
+.overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2rem;width:100%;max-width:480px;animation:pop .3s ease;max-height:90vh;overflow-y:auto;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.modal-head h2{font-size:1.15rem;font-weight:700;}
+.xbtn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;}
+.xbtn:hover{color:var(--text);}
+.fg{margin-bottom:1rem;}
+label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:.32rem;}
+.inp{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.58rem .95rem;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.875rem;outline:none;transition:border-color .2s;}
+.inp:focus{border-color:var(--accent2);}
+textarea.inp{resize:vertical;min-height:78px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.modal-actions{display:flex;gap:.75rem;margin-top:1.25rem;}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.52rem 1.05rem;border-radius:7px;font-family:'Space Grotesk',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--muted);}
+.btn-green{background:var(--accent);color:#000;}
+.btn-green:hover{background:#3dba4d;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-red:hover{filter:brightness(1.1);}
+.btn-blue{background:var(--accent2);color:#000;}
+.btn-blue:hover{filter:brightness(1.1);}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:.65rem 1rem;font-size:.85rem;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:.5rem;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@media(max-width:640px){.chart-row{grid-template-columns:1fr;}.nav-r .site-link{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🔐</div>
+    <div class="login-title">Admin Girişi</div>
+    <div class="login-sub">NebiyevApp idarəetmə paneli</div>
+    <input class="login-input" type="password" id="pwdInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryLogin()"/>
+    <button class="login-btn" onclick="tryLogin()">Daxil ol →</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ ADMIN APP ═══════════════ -->
+<div id="adminApp">
+
+  <!-- TOP NAV -->
+  <nav class="admin-nav">
+    <div class="admin-logo">Nebiyev<span>App</span><sub>ADMIN</sub></div>
+    <div class="nav-r">
+      <a class="site-link" href="index.html" target="_blank">🌐 Sayta bax</a>
+      <button class="logout-btn" onclick="logout()">🚪 Çıxış</button>
+    </div>
+  </nav>
+
+  <!-- TAB NAV -->
+  <div class="tab-nav">
+    <div class="tab-nav-item active" onclick="switchTab('apps')">📱 Tətbiqlər</div>
+    <div class="tab-nav-item" onclick="switchTab('cats')">📂 Kateqoriyalar</div>
+    <div class="tab-nav-item" onclick="switchTab('banners')">📢 Banerlər</div>
+    <div class="tab-nav-item" onclick="switchTab('stats')">📊 Statistika</div>
+    <div class="tab-nav-item" onclick="switchTab('pwd')">🔑 Şifrə</div>
+  </div>
+
+  <!-- ── TAB: APPS ── -->
+  <div class="tab-content active" id="tab-apps">
+    <div class="stats-bar">
+      <div class="stat-card"><div class="stat-label">Ümumi Tətbiq</div><div class="stat-val" id="sTotalApps" style="color:var(--accent2)">0</div><div class="stat-trend">tətbiq mövcuddur</div></div>
+      <div class="stat-card"><div class="stat-label">Ümumi Yükləmə</div><div class="stat-val" id="sTotalDl" style="color:var(--accent)">0</div><div class="stat-trend">bütün tətbiqlər üzrə</div></div>
+      <div class="stat-card"><div class="stat-label">Kateqoriyalar</div><div class="stat-val" id="sTotalCats" style="color:var(--yellow)">0</div><div class="stat-trend">aktiv kateqoriya</div></div>
+      <div class="stat-card"><div class="stat-label">Featured</div><div class="stat-val" id="sFeatured" style="color:var(--red);font-size:1rem;padding-top:.4rem">—</div><div class="stat-trend">həftənin tətbiqi</div></div>
+    </div>
+    <div class="sec-wrap">
+      <div class="toolbar">
+        <div class="toolbar-l">
+          <input class="search-inp" type="text" id="adminSearch" placeholder="🔍 Axtar..." oninput="renderTable()"/>
+          <select class="filter-sel" id="adminCatFilter" onchange="renderTable()">
+            <option value="all">Bütün kateqoriyalar</option>
+          </select>
+        </div>
+        <button class="add-btn" onclick="openAdd()">＋ Yeni Tətbiq</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>İkon</th><th>Ad</th><th>Kateqoriya</th><th>Versiya</th>
+            <th>Ölçü</th><th>Reytinq</th><th>Yükləmə</th><th>Status</th><th>Əməliyyat</th>
+          </tr></thead>
+          <tbody id="appTableBody"></tbody>
+        </table>
+        <div class="empty" id="emptyMsg" style="display:none"><div class="empty-icon">📭</div><div>Heç bir tətbiq tapılmadı</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: CATEGORIES ── -->
+  <div class="tab-content" id="tab-cats">
+    <div class="sec-wrap">
+      <div class="toolbar">
+        <div style="font-size:1rem;font-weight:700">📂 Kateqoriya İdarəetməsi</div>
+        <button class="add-btn" onclick="openAddCat()">＋ Kateqoriya əlavə et</button>
+      </div>
+      <div class="cat-grid" id="catGrid"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB: BANNERS ── -->
+  <div class="tab-content" id="tab-banners">
+    <div class="sec-wrap">
+      <div class="toolbar">
+        <div style="font-size:1rem;font-weight:700">📢 Elan / Banner İdarəetməsi</div>
+        <button class="add-btn" onclick="openAddBanner()">＋ Yeni Baner</button>
+      </div>
+      <div class="banner-grid" id="bannerGrid"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB: STATS ── -->
+  <div class="tab-content" id="tab-stats">
+    <div class="sec-wrap">
+      <div style="font-size:1rem;font-weight:700;margin-bottom:1.25rem">📊 Statistika</div>
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">Kateqoriyaya görə paylanma</div>
+          <div class="bar-chart" id="catChart"></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Ən çox yüklənən 5 tətbiq</div>
+          <div class="bar-chart" id="dlChart"></div>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">Reytinq paylanması</div>
+          <div class="bar-chart" id="ratingChart"></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Son aktivlik jurnalı</div>
+          <table class="visits-table" id="activityLog"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: PASSWORD ── -->
+  <div class="tab-content" id="tab-pwd">
+    <div class="sec-wrap">
+      <div class="pwd-box">
+        <h3>🔑 Admin Şifrəsini Dəyiş</h3>
+        <p>Yeni şifrə növbəti sessiyadan etibarən qüvvəyə minəcək.</p>
+        <div class="fg">
+          <label>Cari şifrə</label>
+          <input class="inp" type="password" id="curPwd" placeholder="••••••••"/>
+        </div>
+        <div class="fg">
+          <label>Yeni şifrə</label>
+          <input class="inp" type="password" id="newPwd" placeholder="Minimum 6 simvol" oninput="checkStrength()"/>
+          <div class="pwd-strength" id="pwdStrength"></div>
+        </div>
+        <div class="fg">
+          <label>Yeni şifrəni təkrarla</label>
+          <input class="inp" type="password" id="newPwd2" placeholder="••••••••"/>
+        </div>
+        <button class="btn btn-blue" style="margin-top:.5rem;width:100%;justify-content:center" onclick="changePwd()">🔑 Şifrəni yenilə</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /adminApp -->
+
+<!-- ══ ADD/EDIT APP MODAL ══ -->
+<div class="overlay" id="formModal">
+  <div class="modal">
+    <div class="modal-head"><h2 id="formTitle">Yeni Tətbiq</h2><button class="xbtn" onclick="closeModal('form')">✕</button></div>
+    <div class="fg"><label>Tətbiq adı *</label><input class="inp" type="text" id="fName" placeholder="Məs: Telegram"/></div>
+    <div class="row2">
+      <div class="fg"><label>Kateqoriya *</label><select class="inp" id="fCat"></select></div>
+      <div class="fg"><label>Versiya</label><input class="inp" type="text" id="fVer" placeholder="v1.0.0"/></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Ölçü</label><input class="inp" type="text" id="fSize" placeholder="45 MB"/></div>
+      <div class="fg"><label>Min Android</label>
+        <select class="inp" id="fAndroid">
+          <option>Android 5.0+</option><option>Android 6.0+</option><option>Android 7.0+</option>
+          <option>Android 8.0+</option><option>Android 10+</option><option>Android 12+</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Reytinq (1-5)</label><input class="inp" type="number" id="fRating" placeholder="4.5" min="1" max="5" step="0.1"/></div>
+      <div class="fg"><label>Yükləmə sayı</label><input class="inp" type="number" id="fDownloads" placeholder="10000"/></div>
+    </div>
+    <div class="fg"><label>APK Link *</label><input class="inp" type="text" id="fLink" placeholder="https://example.com/app.apk"/></div>
+    <div class="fg"><label>Badge (boş / mod / hot / popular)</label><input class="inp" type="text" id="fBadge" placeholder="hot"/></div>
+    <div class="fg"><label>Təsvir</label><textarea class="inp" id="fDesc" placeholder="Tətbiq haqqında..."></textarea></div>
+    <div class="fg" style="display:flex;align-items:center;gap:.6rem">
+      <input type="checkbox" id="fNew" style="width:16px;height:16px;cursor:pointer;accent-color:var(--yellow)"/>
+      <label for="fNew" style="margin:0;cursor:pointer;color:var(--text)">Yeni olaraq işarələ</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('form')">Ləğv et</button>
+      <button class="btn btn-green" style="flex:2" id="formSaveBtn" onclick="saveApp()">✅ Saxla</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD CAT MODAL ══ -->
+<div class="overlay" id="catModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><h2 id="catModalTitle">Kateqoriya Əlavə et</h2><button class="xbtn" onclick="closeModal('cat')">✕</button></div>
+    <div class="fg"><label>Kateqoriya adı *</label><input class="inp" type="text" id="cName" placeholder="Məs: Foto"/></div>
+    <div class="fg"><label>İkon (emoji)</label><input class="inp" type="text" id="cIcon" placeholder="📸"/></div>
+    <div class="row2">
+      <div class="fg"><label>Arxa rəng (rgba)</label><input class="inp" type="text" id="cBg" placeholder="rgba(88,166,255,.15)"/></div>
+      <div class="fg"><label>Yazı rəngi (hex)</label><input class="inp" type="text" id="cColor" placeholder="#58a6ff"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('cat')">Ləğv et</button>
+      <button class="btn btn-green" style="flex:2" onclick="saveCat()">✅ Saxla</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD BANNER MODAL ══ -->
+<div class="overlay" id="bannerModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head"><h2 id="bannerModalTitle">Yeni Baner</h2><button class="xbtn" onclick="closeModal('banner')">✕</button></div>
+    <div class="fg"><label>Başlıq *</label><input class="inp" type="text" id="bTitle" placeholder="Məs: Yay endirimi!"/></div>
+    <div class="fg"><label>Alt başlıq</label><input class="inp" type="text" id="bSub" placeholder="Bütün tətbiqlər pulsuz..."/></div>
+    <div class="fg"><label>Düymə mətni</label><input class="inp" type="text" id="bBtn" placeholder="İndi yüklə"/></div>
+    <div class="fg"><label>Link</label><input class="inp" type="text" id="bLink" placeholder="https://..."/></div>
+    <div class="fg"><label>Emoji / İkon</label><input class="inp" type="text" id="bIcon" placeholder="🎉"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('banner')">Ləğv et</button>
+      <button class="btn btn-green" style="flex:2" onclick="saveBanner()">✅ Əlavə et</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRM DELETE ══ -->
+<div class="overlay" id="confirmModal">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:.75rem">🗑️</div>
+    <div style="font-size:1.05rem;font-weight:700;margin-bottom:.5rem">Silmək istəyirsiniz?</div>
+    <div style="color:var(--muted);font-size:.85rem;margin-bottom:1.5rem" id="confirmMsg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('confirm')">Ləğv et</button>
+      <button class="btn btn-red" style="flex:1" onclick="confirmDeleteAction()">Sil</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════
+//  CONFIG & KEYS
+// ════════════════════════════════════
+const SK_APPS     = 'nebiyevapp_apps';
+const SK_CATS     = 'nebiyevapp_cats';
+const SK_FEAT     = 'nebiyevapp_featured';
+const SK_BANNERS  = 'nebiyevapp_banners';
+const SK_PWD      = 'nebiyevapp_admin_pwd';
+const SK_LOG      = 'nebiyevapp_activity_log';
+const SK_SESSION  = 'nebiyevapp_admin_session';
+const DEFAULT_PWD = 'admin1234';
+
+// ════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════
+function getPwd(){ return localStorage.getItem(SK_PWD) || DEFAULT_PWD; }
+
+function tryLogin(){
+  const v = document.getElementById('pwdInput').value;
+  if(v === getPwd()){
+    sessionStorage.setItem(SK_SESSION,'1');
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('adminApp').style.display='block';
+    init();
+  } else {
+    const e=document.getElementById('loginErr');
+    e.textContent='❌ Şifrə yanlışdır!';
+    document.getElementById('pwdInput').value='';
+    setTimeout(()=>e.textContent='',2500);
+  }
+}
+function logout(){ sessionStorage.removeItem(SK_SESSION); location.reload(); }
+if(sessionStorage.getItem(SK_SESSION)){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('adminApp').style.display='block';
+}
+
+// ════════════════════════════════════
+//  DEFAULT DATA
+// ════════════════════════════════════
+const DEFAULT_CATS = [
+  {id:'Sosial', name:'Sosial', icon:'💬', bg:'rgba(88,166,255,.15)', color:'#58a6ff'},
+  {id:'Oyun',   name:'Oyun',   icon:'🎮', bg:'rgba(247,129,102,.15)', color:'#f78166'},
+  {id:'Alət',   name:'Alət',   icon:'🔧', bg:'rgba(63,185,80,.15)', color:'#3fb950'},
+  {id:'Musiqi', name:'Musiqi', icon:'🎵', bg:'rgba(210,153,34,.15)', color:'#d29922'},
+  {id:'Video',  name:'Video',  icon:'🎬', bg:'rgba(163,113,247,.15)', color:'#a371f7'},
+  {id:'Təhsil', name:'Təhsil', icon:'📚', bg:'rgba(86,211,100,.15)', color:'#56d364'},
+];
+const DEFAULT_APPS_DATA = [
+  {id:1,name:'Telegram',cat:'Sosial',ver:'v10.2.1',size:'58 MB',android:'Android 6.0+',rating:4.9,downloads:128000,desc:'Sürətli, güvənli mesajlaşma platformu.',link:'#',badge:'popular',isNew:false},
+  {id:2,name:'WhatsApp',cat:'Sosial',ver:'v2.23.20',size:'42 MB',android:'Android 5.0+',rating:4.6,downloads:98000,desc:'Dünyada ən çox istifadə edilən mesajlaşma tətbiqi.',link:'#',badge:'',isNew:false},
+  {id:3,name:'PUBG Mobile',cat:'Oyun',ver:'v3.1.0',size:'1.8 GB',android:'Android 8.0+',rating:4.7,downloads:75000,desc:'100 oyunçu, 1 qalib.',link:'#',badge:'hot',isNew:false},
+  {id:4,name:'Spotify',cat:'Musiqi',ver:'v8.9.12',size:'37 MB',android:'Android 6.0+',rating:4.8,downloads:62000,desc:'Milyonlarla mahnı, podcast.',link:'#',badge:'',isNew:true},
+  {id:5,name:'YouTube',cat:'Video',ver:'v18.45.0',size:'53 MB',android:'Android 8.0+',rating:4.5,downloads:55000,desc:'YouTube Premium MOD.',link:'#',badge:'mod',isNew:false},
+  {id:6,name:'Minecraft',cat:'Oyun',ver:'v1.20.51',size:'187 MB',android:'Android 8.0+',rating:4.8,downloads:44000,desc:'Sandbox oyununun ən son versiyası.',link:'#',badge:'',isNew:true},
+  {id:7,name:'VPN Master',cat:'Alət',ver:'v2.7.8',size:'22 MB',android:'Android 5.0+',rating:4.3,downloads:38000,desc:'Sürətli, pulsuz VPN.',link:'#',badge:'',isNew:false},
+  {id:8,name:'Photo Editor',cat:'Alət',ver:'v5.3.1',size:'68 MB',android:'Android 7.0+',rating:4.6,downloads:29000,desc:'Pro fotoşəkil redaktoru.',link:'#',badge:'',isNew:true},
+  {id:9,name:'Duolingo',cat:'Təhsil',ver:'v5.92.4',size:'45 MB',android:'Android 6.0+',rating:4.7,downloads:25000,desc:'Dil öyrənmə tətbiqi.',link:'#',badge:'',isNew:false},
+  {id:10,name:'TikTok',cat:'Sosial',ver:'v32.1.4',size:'78 MB',android:'Android 8.0+',rating:4.4,downloads:88000,desc:'Qısa videolar platformu.',link:'#',badge:'popular',isNew:false},
+  {id:11,name:'Zoom',cat:'Sosial',ver:'v5.16.2',size:'55 MB',android:'Android 7.0+',rating:4.2,downloads:18000,desc:'Video konfrans.',link:'#',badge:'',isNew:false},
+  {id:12,name:'Google Maps',cat:'Alət',ver:'v11.12.0',size:'120 MB',android:'Android 8.0+',rating:4.8,downloads:32000,desc:'Offline xəritələr.',link:'#',badge:'',isNew:false},
+];
+const DEFAULT_BANNERS = [
+  {id:1, title:'Həftənin Endirimi', sub:'Bütün MOD APK-lar pulsuz!', btn:'İndi yüklə', link:'#', icon:'🎉', active:true},
+  {id:2, title:'Yeni Tətbiqlər Gəldi', sub:'Hər gün yeni APK faylları əlavə edilir', btn:'Bax', link:'#', icon:'🆕', active:false},
+];
+
+// ════════════════════════════════════
+//  STORAGE HELPERS
+// ════════════════════════════════════
+function load(key, def){ const r=localStorage.getItem(key); return r?JSON.parse(r):def; }
+function save(key,val){ localStorage.setItem(key,JSON.stringify(val)); }
+function addLog(msg){ const logs=load(SK_LOG,[]); logs.unshift({msg, time:new Date().toLocaleString('az')}); if(logs.length>30)logs.pop(); save(SK_LOG,logs); }
+
+// ════════════════════════════════════
+//  STATE
+// ════════════════════════════════════
+let apps=[], cats=[], banners=[];
+let nextAppId=100, nextBannerId=10;
+let editingAppId=null, editingBannerId=null, deleteTarget=null, deleteType='';
+
+const EICONS={'WhatsApp':'💬','Telegram':'✈️','Instagram':'📸','TikTok':'🎵','YouTube':'▶️','Spotify':'🎧','PUBG Mobile':'🎮','Minecraft':'⛏️','VPN Master':'🛡️','Photo Editor':'🎨','Duolingo':'🦉','Zoom':'📹','Google Maps':'🗺️'};
+function ico(name){ return EICONS[name]||'📱'; }
+function stars(r){ const f=Math.floor(r),h=r%1>=.5; return '★'.repeat(f)+(h?'½':'')+'☆'.repeat(5-f-(h?1:0)); }
+function fmtDl(n){ return n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'K':String(n); }
+function getCS(catId){ return cats.find(c=>c.id===catId)||{bg:'rgba(128,128,128,.1)',color:'#888',icon:'📦',name:catId}; }
+
+// ════════════════════════════════════
+//  INIT
+// ════════════════════════════════════
+function init(){
+  cats    = load(SK_CATS, DEFAULT_CATS);
+  apps    = load(SK_APPS, DEFAULT_APPS_DATA);
+  banners = load(SK_BANNERS, DEFAULT_BANNERS);
+  nextAppId    = Math.max(...apps.map(a=>a.id||0), 99)+1;
+  nextBannerId = Math.max(...banners.map(b=>b.id||0), 9)+1;
+  populateCatDropdowns();
+  updateStats();
+  renderTable();
+  renderCats();
+  renderBanners();
+  renderStatsCharts();
+  renderActivityLog();
+}
+
+// ════════════════════════════════════
+//  TAB SWITCHING
+// ════════════════════════════════════
+function switchTab(name){
+  document.querySelectorAll('.tab-nav-item').forEach((el,i)=>{
+    const names=['apps','cats','banners','stats','pwd'];
+    el.classList.toggle('active', names[i]===name);
+  });
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='stats'){ renderStatsCharts(); renderActivityLog(); }
+}
+
+// ════════════════════════════════════
+//  STATS BAR
+// ════════════════════════════════════
+function updateStats(){
+  document.getElementById('sTotalApps').textContent = apps.length;
+  document.getElementById('sTotalDl').textContent   = fmtDl(apps.reduce((s,a)=>s+(a.downloads||0),0));
+  document.getElementById('sTotalCats').textContent = cats.length;
+  const f=localStorage.getItem(SK_FEAT)||'—';
+  document.getElementById('sFeatured').textContent = f;
+}
+
+// ════════════════════════════════════
+//  APP TABLE
+// ════════════════════════════════════
+function populateCatDropdowns(){
+  const cf=document.getElementById('adminCatFilter');
+  cf.innerHTML='<option value="all">Bütün kateqoriyalar</option>'+cats.map(c=>`<option>${c.name}</option>`).join('');
+  const fc=document.getElementById('fCat');
+  if(fc) fc.innerHTML=cats.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+}
+
+function renderTable(){
+  const q   = document.getElementById('adminSearch').value.toLowerCase();
+  const cat = document.getElementById('adminCatFilter').value;
+  let data  = [...apps];
+  if(cat!=='all') data=data.filter(a=>a.cat===cat);
+  if(q) data=data.filter(a=>a.name.toLowerCase().includes(q));
+
+  const feat=localStorage.getItem(SK_FEAT)||'';
+  const tbody=document.getElementById('appTableBody');
+  const empty=document.getElementById('emptyMsg');
+  const BCOLS={mod:'#a371f7',hot:'#f78166',popular:'#3fb950'};
+
+  if(!data.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  tbody.innerHTML=data.map(app=>{
+    const c=getCS(app.cat);
+    const isFeat=feat===app.name;
+    const bdg=app.badge
+      ?`<span class="badge-pill" style="background:${BCOLS[app.badge]||'#555'}22;color:${BCOLS[app.badge]||'#aaa'}">${app.badge}</span>`
+      :app.isNew?`<span class="badge-pill" style="background:rgba(210,153,34,.15);color:#d29922">yeni</span>`:'—';
+    return `<tr>
+      <td class="td-icon">${ico(app.name)}</td>
+      <td><div class="td-name">${app.name}</div>${isFeat?'<span class="feat-badge">⭐ Featured</span>':''}</td>
+      <td><span class="td-cat" style="background:${c.bg};color:${c.color}">${c.icon} ${c.name}</span></td>
+      <td class="td-ver">${app.ver}</td>
+      <td class="td-size">${app.size}</td>
+      <td><span class="stars">${stars(app.rating)}</span> ${app.rating}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:.76rem">⬇ ${fmtDl(app.downloads)}</td>
+      <td>${bdg}</td>
+      <td><div class="act-btns">
+        <button class="act-btn edit" onclick="openEdit(${app.id})">✏️</button>
+        <button class="act-btn feat" onclick="setFeatApp('${app.name.replace(/'/g,"\\'")}')">⭐</button>
+        <button class="act-btn del" onclick="askDel(${app.id},'app','${app.name.replace(/'/g,"\\'")}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function setFeatApp(name){
+  localStorage.setItem(SK_FEAT, name);
+  updateStats(); renderTable();
+  addLog('⭐ Featured dəyişdirildi: '+name);
+  showToast('⭐ '+name+' featured edildi!');
+}
+
+// ════════════════════════════════════
+//  APP CRUD
+// ════════════════════════════════════
+function openAdd(){
+  editingAppId=null;
+  document.getElementById('formTitle').textContent='Yeni Tətbiq';
+  document.getElementById('formSaveBtn').textContent='✅ Əlavə et';
+  ['fName','fVer','fSize','fLink','fBadge','fDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fRating').value='4.5';
+  document.getElementById('fDownloads').value='0';
+  document.getElementById('fNew').checked=false;
+  openModal('form');
+}
+function openEdit(id){
+  const app=apps.find(a=>a.id===id); if(!app) return;
+  editingAppId=id;
+  document.getElementById('formTitle').textContent='Tətbiqi Düzəlt';
+  document.getElementById('formSaveBtn').textContent='💾 Yadda saxla';
+  document.getElementById('fName').value=app.name;
+  document.getElementById('fCat').value=app.cat;
+  document.getElementById('fVer').value=app.ver;
+  document.getElementById('fSize').value=app.size;
+  document.getElementById('fAndroid').value=app.android;
+  document.getElementById('fRating').value=app.rating;
+  document.getElementById('fDownloads').value=app.downloads;
+  document.getElementById('fLink').value=app.link||'';
+  document.getElementById('fBadge').value=app.badge||'';
+  document.getElementById('fDesc').value=app.desc||'';
+  document.getElementById('fNew').checked=!!app.isNew;
+  openModal('form');
+}
+function saveApp(){
+  const name=document.getElementById('fName').value.trim();
+  const link=document.getElementById('fLink').value.trim();
+  if(!name||!link){alert('Ad və link mütləqdir!');return;}
+  const data={
+    id:editingAppId||nextAppId++, name,
+    cat:document.getElementById('fCat').value,
+    ver:document.getElementById('fVer').value||'v1.0.0',
+    size:document.getElementById('fSize').value||'? MB',
+    android:document.getElementById('fAndroid').value,
+    rating:parseFloat(document.getElementById('fRating').value)||4.5,
+    downloads:parseInt(document.getElementById('fDownloads').value)||0,
+    link, badge:document.getElementById('fBadge').value.trim().toLowerCase(),
+    desc:document.getElementById('fDesc').value.trim(),
+    isNew:document.getElementById('fNew').checked,
+  };
+  if(editingAppId!==null){
+    const i=apps.findIndex(a=>a.id===editingAppId); if(i!==-1) apps[i]=data;
+    addLog('✏️ Tətbiq yeniləndi: '+name); showToast('💾 '+name+' yeniləndi!');
+  } else {
+    apps.unshift(data);
+    addLog('➕ Yeni tətbiq əlavə edildi: '+name); showToast('✅ '+name+' əlavə edildi!');
+  }
+  save(SK_APPS,apps); closeModal('form'); updateStats(); renderTable(); renderStatsCharts();
+}
+
+// ════════════════════════════════════
+//  CATEGORIES
+// ════════════════════════════════════
+function renderCats(){
+  document.getElementById('catGrid').innerHTML=cats.map(c=>{
+    const cnt=apps.filter(a=>a.cat===c.id).length;
+    return `<div class="cat-card">
+      <div class="cat-left">
+        <div class="cat-icon-box" style="background:${c.bg}">${c.icon}</div>
+        <div><div class="cat-name">${c.name}</div><div class="cat-count">${cnt} tətbiq</div></div>
+      </div>
+      <div class="cat-actions">
+        <button class="act-btn del" onclick="askDel('${c.id}','cat','${c.name}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openAddCat(){ document.getElementById('catModalTitle').textContent='Kateqoriya Əlavə et'; ['cName','cIcon','cBg','cColor'].forEach(id=>document.getElementById(id).value=''); openModal('cat'); }
+function saveCat(){
+  const name=document.getElementById('cName').value.trim();
+  if(!name){alert('Ad mütləqdir!');return;}
+  const cat={
+    id:name, name,
+    icon:document.getElementById('cIcon').value||'📦',
+    bg:document.getElementById('cBg').value||'rgba(128,128,128,.15)',
+    color:document.getElementById('cColor').value||'#aaa'
+  };
+  if(cats.find(c=>c.id===name)){showToast('⚠️ Bu kateqoriya artıq var!');return;}
+  cats.push(cat); save(SK_CATS,cats);
+  closeModal('cat'); renderCats(); populateCatDropdowns(); renderTable();
+  addLog('📂 Kateqoriya əlavə edildi: '+name); showToast('✅ '+name+' kateqoriyası əlavə edildi!');
+}
+
+// ════════════════════════════════════
+//  BANNERS
+// ════════════════════════════════════
+function renderBanners(){
+  const el=document.getElementById('bannerGrid');
+  if(!banners.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📢</div><div>Heç bir baner yoxdur</div></div>'; return; }
+  el.innerHTML=banners.map(b=>`
+    <div class="banner-card">
+      <div style="font-size:2rem;flex-shrink:0">${b.icon}</div>
+      <div class="banner-left">
+        <div class="banner-title-row">
+          <span class="status-dot ${b.active?'':'off'}"></span>
+          <span class="banner-title">${b.title}</span>
+          <span style="font-size:.7rem;color:var(--muted)">${b.active?'Aktiv':'Deaktiv'}</span>
+        </div>
+        <div class="banner-sub">${b.sub}</div>
+        <div style="font-size:.75rem;color:var(--accent2);margin-top:.35rem">🔗 ${b.link} &nbsp;·&nbsp; Düymə: <em>${b.btn}</em></div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-shrink:0;align-items:center">
+        <button class="toggle-btn ${b.active?'on':''}" onclick="toggleBanner(${b.id})">${b.active?'Söndür':'Yandır'}</button>
+        <button class="act-btn del" onclick="askDel(${b.id},'banner','${b.title.replace(/'/g,"\\'")}')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+function openAddBanner(){ ['bTitle','bSub','bBtn','bLink','bIcon'].forEach(id=>document.getElementById(id).value=''); openModal('banner'); }
+function saveBanner(){
+  const title=document.getElementById('bTitle').value.trim();
+  if(!title){alert('Başlıq mütləqdir!');return;}
+  banners.unshift({
+    id:nextBannerId++, title,
+    sub:document.getElementById('bSub').value,
+    btn:document.getElementById('bBtn').value||'Bax',
+    link:document.getElementById('bLink').value||'#',
+    icon:document.getElementById('bIcon').value||'📢',
+    active:true
+  });
+  save(SK_BANNERS,banners); closeModal('banner'); renderBanners();
+  addLog('📢 Baner əlavə edildi: '+title); showToast('✅ Baner əlavə edildi!');
+}
+function toggleBanner(id){
+  const b=banners.find(x=>x.id===id); if(!b) return;
+  b.active=!b.active; save(SK_BANNERS,banners); renderBanners();
+  showToast(b.active?'🟢 Baner aktivləşdirildi':'🔴 Baner deaktiv edildi');
+}
+
+// ════════════════════════════════════
+//  STATS CHARTS
+// ════════════════════════════════════
+function renderStatsCharts(){
+  // Cat chart
+  const catCounts={};
+  cats.forEach(c=>catCounts[c.id]=0);
+  apps.forEach(a=>{ if(catCounts[a.cat]!==undefined) catCounts[a.cat]++; });
+  const maxCat=Math.max(...Object.values(catCounts),1);
+  document.getElementById('catChart').innerHTML=cats.map(c=>{
+    const cnt=catCounts[c.id]||0;
+    const pct=Math.round(cnt/maxCat*100);
+    return `<div class="bar-row">
+      <div class="bar-label">${c.icon} ${c.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${c.color}"></div></div>
+      <div class="bar-val">${cnt}</div>
+    </div>`;
+  }).join('');
+
+  // Download chart
+  const top5=[...apps].sort((a,b)=>(b.downloads||0)-(a.downloads||0)).slice(0,5);
+  const maxDl=Math.max(...top5.map(a=>a.downloads||0),1);
+  document.getElementById('dlChart').innerHTML=top5.map(a=>{
+    const pct=Math.round((a.downloads||0)/maxDl*100);
+    return `<div class="bar-row">
+      <div class="bar-label" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--accent2)"></div></div>
+      <div class="bar-val">${fmtDl(a.downloads||0)}</div>
+    </div>`;
+  }).join('');
+
+  // Rating distribution
+  const rBuckets={'5★':0,'4-5★':0,'3-4★':0,'<3★':0};
+  apps.forEach(a=>{
+    if(a.rating>=5) rBuckets['5★']++;
+    else if(a.rating>=4) rBuckets['4-5★']++;
+    else if(a.rating>=3) rBuckets['3-4★']++;
+    else rBuckets['<3★']++;
+  });
+  const maxR=Math.max(...Object.values(rBuckets),1);
+  const rColors={'5★':'#3fb950','4-5★':'#58a6ff','3-4★':'#d29922','<3★':'#f85149'};
+  document.getElementById('ratingChart').innerHTML=Object.entries(rBuckets).map(([k,v])=>`
+    <div class="bar-row">
+      <div class="bar-label">${k}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxR*100)}%;background:${rColors[k]}"></div></div>
+      <div class="bar-val">${v}</div>
+    </div>`).join('');
+}
+
+function renderActivityLog(){
+  const logs=load(SK_LOG,[]);
+  if(!logs.length){ document.getElementById('activityLog').innerHTML='<tr><td style="color:var(--muted);text-align:center;padding:2rem">Heç bir aktivlik yoxdur</td></tr>'; return; }
+  document.getElementById('activityLog').innerHTML=logs.slice(0,12).map(l=>`
+    <tr><td>${l.msg}</td><td class="vt-time">${l.time}</td></tr>`).join('');
+}
+
+// ════════════════════════════════════
+//  DELETE
+// ════════════════════════════════════
+function askDel(id, type, name){
+  deleteTarget=id; deleteType=type;
+  document.getElementById('confirmMsg').textContent='"'+name+'" silmək istədiyinizdən əminsiniz?';
+  openModal('confirm');
+}
+function confirmDeleteAction(){
+  if(deleteType==='app'){
+    apps=apps.filter(a=>a.id!==deleteTarget); save(SK_APPS,apps);
+    addLog('🗑️ Tətbiq silindi'); updateStats(); renderTable(); renderStatsCharts();
+  } else if(deleteType==='cat'){
+    cats=cats.filter(c=>c.id!==deleteTarget); save(SK_CATS,cats);
+    addLog('🗑️ Kateqoriya silindi: '+deleteTarget); renderCats(); populateCatDropdowns();
+  } else if(deleteType==='banner'){
+    banners=banners.filter(b=>b.id!==deleteTarget); save(SK_BANNERS,banners);
+    addLog('🗑️ Baner silindi'); renderBanners();
+  }
+  closeModal('confirm'); showToast('🗑️ Silindi.');
+}
+
+// ════════════════════════════════════
+//  PASSWORD CHANGE
+// ════════════════════════════════════
+function checkStrength(){
+  const v=document.getElementById('newPwd').value;
+  const bar=document.getElementById('pwdStrength');
+  let w=0,col='var(--red)';
+  if(v.length>=6) w=33;
+  if(v.length>=8 && /[0-9]/.test(v)) w=66,col='var(--yellow)';
+  if(v.length>=10 && /[A-Z]/.test(v) && /[0-9]/.test(v)) w=100,col='var(--accent)';
+  bar.style.width=w+'%'; bar.style.background=col;
+}
+function changePwd(){
+  const cur=document.getElementById('curPwd').value;
+  const n1=document.getElementById('newPwd').value;
+  const n2=document.getElementById('newPwd2').value;
+  if(cur!==getPwd()){showToast('❌ Cari şifrə yanlışdır!');return;}
+  if(n1.length<6){showToast('⚠️ Şifrə min 6 simvol olmalıdır!');return;}
+  if(n1!==n2){showToast('⚠️ Şifrələr uyğun deyil!');return;}
+  localStorage.setItem(SK_PWD,n1);
+  ['curPwd','newPwd','newPwd2'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pwdStrength').style.width='0';
+  addLog('🔑 Admin şifrəsi dəyişdirildi');
+  showToast('✅ Şifrə uğurla dəyişdirildi!');
+}
+
+// ════════════════════════════════════
+//  MODALS / TOAST
+// ════════════════════════════════════
+function openModal(t){document.getElementById(t+'Modal').classList.add('open');}
+function closeModal(t){document.getElementById(t+'Modal').classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+if(sessionStorage.getItem(SK_SESSION)) init();
+</script>
+</body>
+</html>
